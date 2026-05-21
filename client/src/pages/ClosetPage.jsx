@@ -1,15 +1,15 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 
-const CATEGORIES = ['all', 'tops', 'bottoms', 'dresses', 'outerwear', 'shoes', 'accessories', 'other'];
-const CATEGORY_EMOJI = { tops:'👕', bottoms:'👖', dresses:'👗', outerwear:'🧥', shoes:'👟', accessories:'👜', other:'🧣' };
+const CATEGORIES = ['all','tops','bottoms','dresses','outerwear','shoes','accessories','other'];
+const EMOJI = { tops:'👕', bottoms:'👖', dresses:'👗', outerwear:'🧥', shoes:'👟', accessories:'👜', other:'🧣' };
 
-function AddItemModal({ onClose, onSave, editItem }) {
+function ItemModal({ onClose, onSave, editItem }) {
   const [form, setForm] = useState(editItem || { name:'', category:'tops', brand:'', color:'', date_acquired:'', notes:'' });
   const [photo, setPhoto] = useState(null);
   const [preview, setPreview] = useState(editItem?.photo_url || null);
   const [saving, setSaving] = useState(false);
-
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handlePhoto = (e) => {
@@ -20,7 +20,7 @@ function AddItemModal({ onClose, onSave, editItem }) {
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.category) return;
+    if (!form.name) return;
     setSaving(true);
     try {
       const fd = new FormData();
@@ -29,11 +29,8 @@ function AddItemModal({ onClose, onSave, editItem }) {
       if (editItem) await api.updateItem(editItem.id, fd);
       else await api.createItem(fd);
       onSave();
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      setSaving(false);
-    }
+    } catch (err) { alert(err.message); }
+    finally { setSaving(false); }
   };
 
   return (
@@ -42,9 +39,9 @@ function AddItemModal({ onClose, onSave, editItem }) {
         <div className="modal-title">{editItem ? 'Edit item' : 'Add new item'}</div>
         <div className="form-group">
           <label className="form-label">Photo</label>
-          <label className="photo-upload" style={{ display: 'block' }}>
+          <label className="photo-upload" style={{ display:'block' }}>
             {preview ? <img src={preview} alt="preview" className="photo-preview" /> : <span>📷 Tap to upload photo</span>}
-            <input type="file" accept="image/*" onChange={handlePhoto} style={{ display: 'none' }} />
+            <input type="file" accept="image/*" onChange={handlePhoto} style={{ display:'none' }} />
           </label>
         </div>
         <div className="form-group">
@@ -60,7 +57,7 @@ function AddItemModal({ onClose, onSave, editItem }) {
           </div>
           <div className="form-group">
             <label className="form-label">Color</label>
-            <input className="form-input" value={form.color} onChange={e => set('color', e.target.value)} placeholder="e.g. Navy blue" />
+            <input className="form-input" value={form.color} onChange={e => set('color', e.target.value)} placeholder="e.g. Navy" />
           </div>
         </div>
         <div className="form-row">
@@ -75,11 +72,11 @@ function AddItemModal({ onClose, onSave, editItem }) {
         </div>
         <div className="form-group">
           <label className="form-label">Notes</label>
-          <textarea className="form-textarea" value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Material, fit notes, how to style..." />
+          <textarea className="form-textarea" value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Material, fit, how to style..." />
         </div>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
+        <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
           <button className="btn" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleSubmit} disabled={saving}>
+          <button className="btn btn-primary" onClick={handleSubmit} disabled={saving || !form.name}>
             {saving ? 'Saving...' : editItem ? 'Save changes' : 'Add item'}
           </button>
         </div>
@@ -91,87 +88,65 @@ function AddItemModal({ onClose, onSave, editItem }) {
 export default function ClosetPage() {
   const [items, setItems] = useState([]);
   const [category, setCategory] = useState('all');
-  const [showAdd, setShowAdd] = useState(false);
-  const [editItem, setEditItem] = useState(null);
+  const [modal, setModal] = useState(null); // null | 'add' | item object
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
-    try {
-      const data = await api.getItems(category !== 'all' ? { category } : {});
-      setItems(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    try { setItems(await api.getItems(category !== 'all' ? { category } : {})); }
+    catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { load(); }, [category]);
-
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this item?')) return;
-    await api.deleteItem(id);
-    load();
-  };
-
-  const maxWear = Math.max(...items.map(i => parseInt(i.wear_count || 0)), 1);
 
   return (
     <>
       <div className="topbar">
         <div className="page-title">My closet <span>· {items.length} items</span></div>
-        <div className="topbar-actions">
-          <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Add item</button>
-        </div>
+        <button className="btn btn-primary" onClick={() => setModal('add')}>+ Add item</button>
       </div>
       <div className="content">
         <div className="filter-row">
           {CATEGORIES.map(c => (
-            <button key={c} className={`chip${category === c ? ' active' : ''}`} onClick={() => setCategory(c)}>
-              {c === 'all' ? 'All' : `${CATEGORY_EMOJI[c]} ${c}`}
+            <button key={c} className={`chip${category===c?' active':''}`} onClick={() => setCategory(c)}>
+              {c === 'all' ? 'All' : `${EMOJI[c]} ${c}`}
             </button>
           ))}
         </div>
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-3)' }}>Loading...</div>
+          <div style={{ padding:40, textAlign:'center', color:'var(--text-3)' }}>Loading...</div>
         ) : (
           <div className="item-grid">
-            {items.map(item => {
-              const wearCount = parseInt(item.wear_count || 0);
-              const isRarelyWorn = wearCount === 0;
-              return (
-                <div key={item.id} className="item-card" onClick={() => setEditItem(item)}>
-                  {item.photo_url
-                    ? <img src={item.photo_url} alt={item.name} className="item-photo" />
-                    : <div className="item-photo-placeholder">{CATEGORY_EMOJI[item.category] || '👚'}</div>
-                  }
-                  <div className="item-info">
-                    <div className="item-name">{item.name}</div>
-                    <div className="item-meta">{item.brand || item.category}</div>
-                    <div className="wear-badge">
-                      <div className="wear-dot" style={{ background: isRarelyWorn ? '#F09595' : '#5DCAA5' }} />
-                      <span style={{ color: isRarelyWorn ? 'var(--red-dark)' : 'var(--teal-dark)', fontSize: 11 }}>
-                        {isRarelyWorn ? 'never worn' : `worn ${wearCount}×`}
-                      </span>
-                    </div>
+            {items.map(item => (
+              <div key={item.id} className="item-card" onClick={() => setModal(item)}>
+                {item.photo_url
+                  ? <img src={item.photo_url} alt={item.name} className="item-photo" />
+                  : <div className="item-photo-placeholder">{EMOJI[item.category] || '👚'}</div>
+                }
+                <div className="item-info">
+                  <div className="item-name">{item.name}</div>
+                  <div className="item-meta">{item.brand || item.category}</div>
+                  <div className="wear-badge">
+                    <div className="wear-dot" style={{ background: item.wear_count > 0 ? '#5DCAA5' : '#F09595' }} />
+                    <span style={{ color: item.wear_count > 0 ? 'var(--teal-dark)' : 'var(--red-dark)' }}>
+                      {item.wear_count > 0 ? `worn ${item.wear_count}×` : 'never worn'}
+                    </span>
                   </div>
                 </div>
-              );
-            })}
-            <button className="add-card" onClick={() => setShowAdd(true)}>
-              <span className="add-card-icon">+</span>
-              <span>add item</span>
+              </div>
+            ))}
+            <button className="add-card" onClick={() => setModal('add')}>
+              <span className="add-card-icon">+</span><span>add item</span>
             </button>
           </div>
         )}
       </div>
-
-      {(showAdd || editItem) && (
-        <AddItemModal
-          editItem={editItem}
-          onClose={() => { setShowAdd(false); setEditItem(null); }}
-          onSave={() => { setShowAdd(false); setEditItem(null); load(); }}
+      {modal && (
+        <ItemModal
+          editItem={modal === 'add' ? null : modal}
+          onClose={() => setModal(null)}
+          onSave={() => { setModal(null); load(); }}
         />
       )}
     </>

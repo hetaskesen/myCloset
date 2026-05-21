@@ -1,7 +1,3 @@
--- My Closet — PostgreSQL Schema
--- Run this in DBeaver or via psql after setting up your Railway database
--- psql $DATABASE_URL -f schema.sql
-
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE IF NOT EXISTS items (
@@ -50,7 +46,6 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_outfit_logs_date ON outfit_logs (worn_date DESC);
 CREATE INDEX IF NOT EXISTS idx_outfit_items_outfit ON outfit_items (outfit_id);
 CREATE INDEX IF NOT EXISTS idx_outfit_items_item ON outfit_items (item_id);

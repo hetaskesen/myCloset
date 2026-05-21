@@ -15,9 +15,9 @@ export function usePushNotifications() {
 
   useEffect(() => {
     if ('serviceWorker' in navigator && permission === 'granted') {
-      navigator.serviceWorker.ready.then(reg => {
-        reg.pushManager.getSubscription().then(sub => setSubscribed(!!sub));
-      });
+      navigator.serviceWorker.ready.then(reg =>
+        reg.pushManager.getSubscription().then(sub => setSubscribed(!!sub))
+      );
     }
   }, [permission]);
 
@@ -27,9 +27,9 @@ export function usePushNotifications() {
       const perm = await Notification.requestPermission();
       setPermission(perm);
       if (perm !== 'granted') return;
-
       const reg = await navigator.serviceWorker.ready;
       const { publicKey } = await api.getVapidKey();
+      if (!publicKey) { alert('Push notifications not configured yet.'); return; }
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey),
@@ -37,10 +37,8 @@ export function usePushNotifications() {
       await api.subscribe(sub.toJSON());
       setSubscribed(true);
     } catch (err) {
-      console.error('Push subscribe error:', err);
-    } finally {
-      setLoading(false);
-    }
+      console.error('Subscribe error:', err);
+    } finally { setLoading(false); }
   };
 
   const unsubscribe = async () => {
@@ -48,16 +46,10 @@ export function usePushNotifications() {
     try {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
-      if (sub) {
-        await api.unsubscribe(sub.endpoint);
-        await sub.unsubscribe();
-      }
+      if (sub) { await api.unsubscribe(sub.endpoint); await sub.unsubscribe(); }
       setSubscribed(false);
-    } catch (err) {
-      console.error('Push unsubscribe error:', err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error('Unsubscribe error:', err); }
+    finally { setLoading(false); }
   };
 
   return { permission, subscribed, loading, subscribe, unsubscribe };

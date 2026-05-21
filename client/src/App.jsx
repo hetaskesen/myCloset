@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import ClosetPage from './pages/ClosetPage';
 import OutfitsPage from './pages/OutfitsPage';
 import LogPage from './pages/LogPage';
@@ -6,14 +7,15 @@ import InsightsPage from './pages/InsightsPage';
 import SettingsPage from './pages/SettingsPage';
 import './app.css';
 
+const NAV = [
+  { to: '/', icon: '👕', label: 'Closet', end: true },
+  { to: '/outfits', icon: '🪄', label: 'Outfits' },
+  { to: '/log', icon: '📅', label: 'Daily log' },
+  { to: '/insights', icon: '📊', label: 'Insights' },
+  { to: '/settings', icon: '⚙️', label: 'Settings' },
+];
+
 function Sidebar() {
-  const links = [
-    { to: '/', icon: '👕', label: 'Closet', end: true },
-    { to: '/outfits', icon: '🪄', label: 'Outfits' },
-    { to: '/log', icon: '📅', label: 'Daily log' },
-    { to: '/insights', icon: '📊', label: 'Insights' },
-    { to: '/settings', icon: '⚙️', label: 'Settings' },
-  ];
   return (
     <nav className="sidebar">
       <div className="logo">
@@ -24,7 +26,7 @@ function Sidebar() {
         </div>
       </div>
       <div className="nav-links">
-        {links.map(l => (
+        {NAV.map(l => (
           <NavLink key={l.to} to={l.to} end={l.end}
             className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             <span>{l.icon}</span> {l.label}
@@ -37,7 +39,7 @@ function Sidebar() {
 
 export default function App() {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <BrowserRouter>
       <div className="layout">
         <Sidebar />
         <main className="main-content">
