@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "nodemon server/index.js",
-    "dev:client": "vite client",
+    "dev:client": "vite --config client/vite.config.js client",
     "build": "vite build client --outDir ../dist",
     "start": "node server/index.js"
   },
